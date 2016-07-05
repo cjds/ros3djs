@@ -7,12 +7,32 @@
 <script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
 <script src="http://cdn.robotwebtools.org/roslibjs/current/roslib.js"></script>
 <script src="../build/ros3d.js"></script>
+<script src="mjpegcanvas.js"></script>
+<style type="text/css">
+  #markers{
+    position: relative;
+  }
+  #markers canvas{
+    position: absolute;
+  }
 
+</style>
 <script>
   /**
    * Setup all visualization elements when the page is loaded. 
    */
   function init() {
+    var mjpegcanvas =  new MJPEGCANVAS.MultiStreamViewer({
+      divID : 'markers',
+      width : 800,
+      height : 600,
+      host : 'rail-engine.cc.gatech.edu',
+      port : 8080,
+      quality: '90',
+      topics: ['/camera/rgb/image_rect_color','/camera/rgb/image_rect_color'],
+      labels: ['Overhead','Side']
+    });
+
     // Connect to ROS.
     var ros = new ROSLIB.Ros({
       url : 'ws://localhost:9090'
@@ -23,7 +43,8 @@
       divID : 'markers',
       width : 800,
       height : 600,
-      antialias : true
+      antialias : true,
+      alpha: 0.1
     });
 
     // Setup a client to listen to TFs.
