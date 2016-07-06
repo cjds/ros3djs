@@ -38,14 +38,17 @@
       url : 'ws://localhost:9090'
     });
 
-    // Create the main viewer.
+    // Create the main viewer
     var viewer = new ROS3D.Viewer({
       divID : 'markers',
       width : 800,
       height : 600,
       antialias : true,
-      alpha: 0.1
-    });
+      alpha: 0.1,
+      near: 0.2, //from P. Grice's code  https://github.com/gt-ros-pkg/hrl-assistive/blob/indigo-devel/assistive_teleop/vci-www/js/video/viewer.js
+      far: 10,
+      fov: 30 //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
+     });
 
     // Setup a client to listen to TFs.
     var tfClient = new ROSLIB.TFClient({
@@ -53,7 +56,21 @@
       angularThres : 0.01,
       transThres : 0.01,
       rate : 10.0,
-      fixedFrame : '/sensor_frame_sensor_link'
+      fixedFrame : '/jaco_base_link'
+    });
+
+    var camera_tfClient = new ROSLIB.TFClient({
+      ros : ros,
+      angularThres : 0.01,
+      transThres : 0.01,
+      rate : 10.0,
+      fixedFrame : '/camer_rgb_optical_frame'
+    });
+
+    var imClient = new ROS3D.ViewerHandle({
+      ros : ros,
+      tfClient : tfClient,
+      camera : viewer.camera,
     });
 
     // Setup the marker client.
@@ -73,9 +90,9 @@
   <p>Run the following commands in the terminal then refresh this page.</p>
   <ol
 >    <li><tt>roslaunch nimbus_bringup nimbus_bringup.launch</tt></li>
-    <li><tt>rosrun interactive_marker_tutorials basic_controls</tt></li>
-    <li><tt>rosrun interactive_marker_proxy proxy topic_ns:=/basic_controls
-        target_frame:=/rotating_frame</tt></li>
+    <li><tt>roslaunch nimbus_web_interfaces web_services.launch</tt></li>
+    <li><tt>rosrun interactive_marker_proxy proxy topic_ns:=/nimbus_interactive_manipulation
+        target_frame:=/jaco_base_link</tt></li>
     <li><tt>rosrun tf2_web_republisher tf2_web_republisher</tt></li>
     <li><tt>roslaunch rosbridge_server rosbridge_websocket.launch</tt></li>
   </ol>

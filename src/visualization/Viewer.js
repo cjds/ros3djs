@@ -31,7 +31,7 @@ ROS3D.Viewer = function(options) {
   var intensity = options.intensity || 0.66;
   var near = options.near || 0.01;
   var far = options.far || 1000;
-  var tfClient = options.tfClient
+  var fov = options.fov || 40;
   
   var cameraPosition = options.cameraPose || {
     x : 3,
@@ -55,7 +55,7 @@ ROS3D.Viewer = function(options) {
   this.scene = new THREE.Scene();
 
   // create the global camera
-  this.camera = new THREE.PerspectiveCamera(40, width / height, near, far);
+  this.camera = new THREE.PerspectiveCamera(fov, width / height, near, far);
   this.camera.position.x = cameraPosition.x;
   this.camera.position.y = cameraPosition.y;
   this.camera.position.z = cameraPosition.z;
