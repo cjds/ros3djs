@@ -24,40 +24,45 @@ update set camera pose from client
 ROS3D.ViewerHandle = function(options) {
   options = options || {};
   this.tfClient = options.tfClient;
-  this.dragging = false;
-  this.timeoutHandle = null;
-  this.tfTransform = new ROSLIB.Transform();
   this.camera = options.camera;
+  this.frame = options.frame;
+  this.tfTransform = new ROSLIB.Transform();
   
+  this.camera.projectionMatrix.elements = [1.1129, 0,0,0,0,2.009,0,0,0,0,-1.001, -1, 0,0,-0.0400266,0];
+
   // start by setting the pose
   this.tfUpdateBound = this.tfUpdate.bind(this);
-};
 
-ROS3D.ViewerHandle.prototype.__proto__ = EventEmitter2.prototype;
+  this.subscribeTf();
+};
 
 /**
  * Subscribe to the TF associated with this interactive marker.
  */
 ROS3D.ViewerHandle.prototype.subscribeTf = function() {
   // subscribe to tf updates if frame-fixed
-  this.tfClient.subscribe(this.message.header.frame_id, this.tfUpdateBound);
+  this.tfClient.subscribe(this.frame, this.tfUpdateBound);
 };
 
 ROS3D.ViewerHandle.prototype.unsubscribeTf = function() {
-  this.tfClient.unsubscribe(this.message.header.frame_id, this.tfUpdateBound);
+  this.tfClient.unsubscribe(this.frame, this.tfUpdateBound);
 };
 
 /**
  * Emit the new pose that has come from the server.
  */
 ROS3D.ViewerHandle.prototype.emitServerPoseUpdate = function() {
-  var transform = this.tfTransform;
-  this.camera.position.set(transform.translation.x,transform.translation.y,transform.translation.z);
-  this.camera.quaternion.set(transform.rotation.x,transform.rotation.y,transform.rotation.z,transform.rotation.w);
+  console.log('Transfrom is transforming');
+  var inv = this.tfTransform.clone();
+  inv.rotation.invert();
+  inv.translation.multiplyQuaternion(inv.rotation);
+  inv.translation.x *= -1;
+  inv.translation.y *= -1;
+  inv.translation.z *= -1;
+  this.camera.position.set(inv.translation.x,inv.translation.y,inv.translation.z);
+  this.camera.quaternion.set(inv.rotation.x,inv.rotation.y,inv.rotation.z,inv.rotation.w);
   this.camera.updateMatrix();
   this.camera.updateMatrixWorld();
-  var out = this.camera.localToWorld(new THREE.Vector3(1,0,0));
-  this.camera.lookAt(out);
 };
 
 /**

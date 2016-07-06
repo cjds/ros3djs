@@ -46,8 +46,9 @@
       antialias : true,
       alpha: 0.1,
       near: 0.2, //from P. Grice's code  https://github.com/gt-ros-pkg/hrl-assistive/blob/indigo-devel/assistive_teleop/vci-www/js/video/viewer.js
-      far: 10,
-      fov: 30 //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
+      far: 30,
+      fov: 70, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
+      cameraPose:{x:1,y:-20,z:-20}
      });
 
     // Setup a client to listen to TFs.
@@ -59,18 +60,11 @@
       fixedFrame : '/jaco_base_link'
     });
 
-    var camera_tfClient = new ROSLIB.TFClient({
-      ros : ros,
-      angularThres : 0.01,
-      transThres : 0.01,
-      rate : 10.0,
-      fixedFrame : '/camer_rgb_optical_frame'
-    });
-
-    var imClient = new ROS3D.ViewerHandle({
+    var viewerHandle = new ROS3D.ViewerHandle({
       ros : ros,
       tfClient : tfClient,
       camera : viewer.camera,
+      frame : '/camera_rgb_optical_frame'
     });
 
     // Setup the marker client.
