@@ -31,6 +31,8 @@ ROS3D.Viewer = function(options) {
   var intensity = options.intensity || 0.66;
   var near = options.near || 0.01;
   var far = options.far || 1000;
+  var tfClient = options.tfClient
+  
   var cameraPosition = options.cameraPose || {
     x : 3,
     y : 3,

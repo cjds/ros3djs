@@ -53,14 +53,14 @@
       angularThres : 0.01,
       transThres : 0.01,
       rate : 10.0,
-      fixedFrame : '/rotating_frame'
+      fixedFrame : '/sensor_frame_sensor_link'
     });
 
     // Setup the marker client.
     var imClient = new ROS3D.InteractiveMarkerClient({
       ros : ros,
       tfClient : tfClient,
-      topic : '/basic_controls',
+      topic : '/nimbus_interactive_manipulation',
       camera : viewer.camera,
       rootObject : viewer.selectableObjects
     });
@@ -71,8 +71,8 @@
 <body onload="init()">
   <h1>Simple Interactive Marker Example</h1>
   <p>Run the following commands in the terminal then refresh this page.</p>
-  <ol>
-    <li><tt>roscore</tt></li>
+  <ol
+>    <li><tt>roslaunch nimbus_bringup nimbus_bringup.launch</tt></li>
     <li><tt>rosrun interactive_marker_tutorials basic_controls</tt></li>
     <li><tt>rosrun interactive_marker_proxy proxy topic_ns:=/basic_controls
         target_frame:=/rotating_frame</tt></li>
