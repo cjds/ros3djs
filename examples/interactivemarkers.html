@@ -45,11 +45,35 @@
       height : 600,
       antialias : true,
       alpha: 0.1,
-      near: 0.2, //from P. Grice's code  https://github.com/gt-ros-pkg/hrl-assistive/blob/indigo-devel/assistive_teleop/vci-www/js/video/viewer.js
-      far: 30,
-      fov: 70, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
-      cameraPose:{x:1,y:-20,z:-20}
+      near: 0.1, //from P. Grice's code  https://github.com/gt-ros-pkg/hrl-assistive/blob/indigo-devel/assistive_teleop/vci-www/js/video/viewer.js
+      far: 40,
+      fov: 50, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
+      cameraPose:{x:2,y:2,z:2}
      });
+
+    ROSLIB.TFClient.prototype.processTFArray = function(tf) {
+      var that = this;
+      tf.transforms.forEach(function(transform) {
+        var frameID = transform.child_frame_id;
+        if (frameID[0] === '/')
+        {
+          frameID = frameID.substring(1);
+        }
+        var info = this.frameInfos[frameID];
+        if (info) {
+          transform.transform.translation.z-=0.90
+         // transform.transform.translation.x+=0.02
+         // transform.transform.translation.y-=0.12
+          info.transform = new ROSLIB.Transform({
+            translation : transform.transform.translation,
+            rotation : transform.transform.rotation
+          });
+          info.cbs.forEach(function(cb) {
+            cb(info.transform);
+          });
+        }
+      }, this);
+  };
 
     // Setup a client to listen to TFs.
     var tfClient = new ROSLIB.TFClient({
@@ -59,6 +83,8 @@
       rate : 10.0,
       fixedFrame : '/jaco_base_link'
     });
+
+
 
     var viewerHandle = new ROS3D.ViewerHandle({
       ros : ros,
@@ -86,9 +112,7 @@
 >    <li><tt>roslaunch nimbus_bringup nimbus_bringup.launch</tt></li>
     <li><tt>roslaunch nimbus_web_interfaces web_services.launch</tt></li>
     <li><tt>rosrun interactive_marker_proxy proxy topic_ns:=/nimbus_interactive_manipulation
-        target_frame:=/jaco_base_link</tt></li>
-    <li><tt>rosrun tf2_web_republisher tf2_web_republisher</tt></li>
-    <li><tt>roslaunch rosbridge_server rosbridge_websocket.launch</tt></li>
+        target_frame:=/jaco_ee</tt></li>
   </ol>
   <div id="markers"></div>
 </body>

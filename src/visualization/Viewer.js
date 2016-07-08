@@ -18,6 +18,7 @@
  *  * antialias (optional) - if antialiasing should be used
  *  * intensity (optional) - the lighting intensity setting to use
  *  * cameraPosition (optional) - the starting position of the camera
+ *  * interactive (optional) - specifies whether the user can interact with the camera
  */
 ROS3D.Viewer = function(options) {
   var that = this;
@@ -32,6 +33,7 @@ ROS3D.Viewer = function(options) {
   var near = options.near || 0.01;
   var far = options.far || 1000;
   var fov = options.fov || 40;
+  var interactive = options.interactive ||true;
   
   var cameraPosition = options.cameraPose || {
     x : 3,
