@@ -1,14 +1,11 @@
 /**
- * @author Russell Toris - russell.toris@gmail.com
+ * @author Russell Toris - rctoris@wpi.edu
+ * @author Carl Saldanha - csaldanha3@gatech.edu
  */
 
 var MJPEGCANVAS = MJPEGCANVAS || {
-  REVISION : '0.5.0-SNAPSHOT'
+  REVISION : '0.4.1'
 };
-
-/**
- * @author Russell Toris - russell.toris@gmail.com
- */
 
 /**
  * A MultiStreamViewer can be used to stream multiple MJPEG topics into a canvas.
@@ -32,6 +29,7 @@ var MJPEGCANVAS = MJPEGCANVAS || {
 MJPEGCANVAS.MultiStreamViewer = function(options) {
   var that = this;
   options = options || {};
+  this.options=options;
   var divID = options.divID;
   var width = options.width;
   var height = options.height;
@@ -42,26 +40,17 @@ MJPEGCANVAS.MultiStreamViewer = function(options) {
   var labels = options.labels;
   var defaultStream = options.defaultStream || 0;
   var currentTopic = topics[defaultStream];
+  var markerTopic = options.markerTopicName;
+  var tfObject = options.tfObject;
+  var tf = options.tf;
 
-  // create an overlay canvas for the button
-  var canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  var context = canvas.getContext('2d');
 
   // menu div
   var menu = document.createElement('div');
   menu.style.display = 'none';
   document.getElementsByTagName('body')[0].appendChild(menu);
 
-  // button for the error
-  var buttonHeight = height / 8;
-  var buttonPadding = 10;
-  var button = new MJPEGCANVAS.Button({
-    text : 'Edit',
-    height : buttonHeight
-  });
-  var buttonWidth = button.width;
+
 
   // use a regular viewer internally
   var viewer = new MJPEGCANVAS.Viewer({
@@ -72,7 +61,8 @@ MJPEGCANVAS.MultiStreamViewer = function(options) {
     port : port,
     quality : quality,
     topic : currentTopic,
-    overlay : canvas
+    tfObject : tfObject,
+    tf:tf
   });
 
   // catch the events
@@ -84,18 +74,23 @@ MJPEGCANVAS.MultiStreamViewer = function(options) {
     that.emit('change', topic);
   });
 
-  /**
-   * Clear the button from the overlay canvas.
-   */
-  function clearButton() {
-    if (buttonTimer) {
-      window.clearInterval(buttonTimer);
-      // clear the button
-      canvas.width = canvas.width;
-      hasButton = false;
-    }
-  }
 
+
+  // button for the editing 
+  var buttonHeight = height / 8;
+  var buttonPadding = 10;
+  var button = new MJPEGCANVAS.Button({
+    text : 'Edit',
+    height : buttonHeight,
+    topics:topics,
+    currentTopic:topics[defaultStream],
+    labels:labels,
+    viewer: viewer
+  });
+
+
+
+  var buttonWidth = button.width;
   /**
    * Fades the stream by putting an overlay on it.
    */
@@ -114,113 +109,24 @@ MJPEGCANVAS.MultiStreamViewer = function(options) {
   var buttonTimer = null;
   var menuOpen = false;
   var hasButton = false;
+
+  //add the button to it
+  viewer.canvas.parentNode.insertBefore(button.rootElement,viewer.canvas)
   viewer.canvas.addEventListener('mousemove', function(e) {
-    clearButton();
-
-    if (!menuOpen) {
-      hasButton = true;
-      // add the button
-      button.redraw();
-      context.drawImage(button.canvas, buttonPadding, height - (buttonHeight + buttonPadding));
-
-      // display the button for 3 seconds
-      buttonTimer = setInterval(function() {
-        // clear the overlay canvas
-        clearButton();
-      }, 3000);
-    } else {
-      fadeImage();
-    }
+  
   }, false);
 
   // add the click listener
   viewer.canvas.addEventListener('click', function(e) {
-    // check if the button is there
-    if (hasButton) {
-      // determine the click position
-      var offsetLeft = 0;
-      var offsetTop = 0;
-      var element = viewer.canvas;
-      while (element && !isNaN(element.offsetLeft) && !isNaN(element.offsetTop)) {
-        offsetLeft += element.offsetLeft - element.scrollLeft;
-        offsetTop += element.offsetTop - element.scrollTop;
-        element = element.offsetParent;
-      }
-
-      var x = e.pageX - offsetLeft;
-      var y = e.pageY - offsetTop;
-
-      // check if we are in the 'edit' button
-      if (x < (buttonWidth + buttonPadding) && x > buttonPadding
-          && y > (height - (buttonHeight + buttonPadding)) && y < height - buttonPadding) {
-        menuOpen = true;
-        clearButton();
-
-        // create the menu
-        var heading = document.createElement('span');
-        heading.innerHTML = '<h2>Camera Streams</h2><hr /><br />';
-        menu.appendChild(heading);
-        var form = document.createElement('form');
-        var streamLabel = document.createElement('label');
-        streamLabel.setAttribute('for', 'stream');
-        streamLabel.innerHTML = 'Stream: ';
-        form.appendChild(streamLabel);
-        var streamMenu = document.createElement('select');
-        streamMenu.setAttribute('name', 'stream');
-        // add each option
-        for ( var i = 0; i < topics.length; i++) {
-          var option = document.createElement('option');
-          // check if this is the selected option
-          if (topics[i] === currentTopic) {
-            option.setAttribute('selected', 'selected');
-          }
-          option.setAttribute('value', topics[i]);
-          // check for a label
-          if (labels) {
-            option.innerHTML = labels[i];
-          } else {
-            option.innerHTML += topics[i];
-          }
-          streamMenu.appendChild(option);
-        }
-        form.appendChild(streamMenu);
-        menu.appendChild(form);
-        menu.appendChild(document.createElement('br'));
-        var close = document.createElement('button');
-        close.innerHTML = 'Close';
-        menu.appendChild(close);
-
-        // display the menu
-        menu.style.position = 'absolute';
-        menu.style.top = offsetTop + 'px';
-        menu.style.left = offsetLeft + 'px';
-        menu.style.width = width + 'px';
-        menu.style.display = 'block';
-
-        streamMenu.addEventListener('click', function() {
-          var topic = streamMenu.options[streamMenu.selectedIndex].value;
-          // make sure it is a new stream
-          if (topic !== currentTopic) {
-            viewer.changeStream(topic);
-          }
-        }, false);
-
-        // handle the interactions
-        close.addEventListener('click', function(e) {
-          // close the menu
-          menu.innerHTML = '';
-          menu.style.display = 'none';
-          menuOpen = false;
-          canvas.width = canvas.width;
-        }, false);
-      }
-    }
   }, false);
+  
+  return viewer;
 };
+
 MJPEGCANVAS.MultiStreamViewer.prototype.__proto__ = EventEmitter2.prototype;
 
 /**
- * @author Russell Toris - russell.toris@gmail.com
+ * @author Russell Toris - rctoris@wpi.edu
  */
 
 /**
@@ -255,9 +161,15 @@ MJPEGCANVAS.Viewer = function(options) {
   this.refreshRate = options.refreshRate || 10;
   this.interval = options.interval || 30;
   this.invert = options.invert || false;
-
+  this.markers =[] //object for a marker {type:'',data:''}
+  this.topics= [] //the topics that the system can subscribe to, to get messages
+  this.tf_frames = [] // the frames which we are visualizing with            {} CONNECTED
+  this.tf_frame_transforms= [] //the latest transform for each of the frames {} CONNECTED
+  this.tfObject = options.tfObject 
+  this.updateOverlay = true;
+  var tf = options.tf || 'arm_mount_plate_link'; // this is the base frame of the whole system
+  this.base_frame={'rotation':{'x':0,'y':0,'z':0},'translation':{'x':0,'y':0,'z':0}}
   var topic = options.topic;
-  var overlay = options.overlay;
 
   // create no image initially
   this.image = new Image();
@@ -272,6 +184,12 @@ MJPEGCANVAS.Viewer = function(options) {
   this.canvas.style.background = '#aaaaaa';
   document.getElementById(divID).appendChild(this.canvas);
   var context = this.canvas.getContext('2d');
+
+  // create an overlay canvas for the descriptions and other stuff
+  var overlay = document.createElement('canvas');
+  overlay.width = this.width;
+  overlay.height = this.height;
+  var overlay_context = overlay.getContext('2d');
 
   var drawInterval = Math.max(1 / this.refreshRate * 1000, this.interval);
   /**
@@ -290,24 +208,42 @@ MJPEGCANVAS.Viewer = function(options) {
           (that.height - (that.height / 2)) / 2, that.width / 2, that.height / 2);
       that.emit('warning', 'Invalid stream.');
     }
-
-    // check for an overlay
-    if (overlay) {
-      context.drawImage(overlay, 0, 0);
-    }
-
-    // silly firefox...
+    //silly firefox...
     if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
       var aux = that.image.src.split('?killcache=');
       that.image.src = aux[0] + '?killcache=' + Math.random(42);
     }
   }
 
+
+
+
+  this.changeStream = function(topic) {
+    console.log(topic)
+    this.image = new Image();
+    // create the image to hold the stream
+    var src = 'http://' + this.host + ':' + this.port + '/stream?topic=' + topic;
+    // add various options
+    src += '&width=' + this.width;
+    src += '&height=' + this.height;
+    if (this.quality > 0) {
+      src += '&quality=' + this.quality;
+    }
+    if (this.invert) {
+      src += '&invert=' + this.invert;
+    }
+    this.image.src = src;
+    // emit an event for the change
+    this.emit('change', topic);
+  };
+  
   // grab the initial stream
   this.changeStream(topic);
 
   // call draw with the given interval or rate
   setInterval(draw, drawInterval);
+
+  return this;
 };
 MJPEGCANVAS.Viewer.prototype.__proto__ = EventEmitter2.prototype;
 
@@ -316,35 +252,22 @@ MJPEGCANVAS.Viewer.prototype.__proto__ = EventEmitter2.prototype;
  *
  * @param topic - the topic to stream, like '/wide_stereo/left/image_color'
  */
-MJPEGCANVAS.Viewer.prototype.changeStream = function(topic) {
-  this.image = new Image();
-  // create the image to hold the stream
-  var src = 'http://' + this.host + ':' + this.port + '/stream?topic=' + topic;
-  // add various options
-  src += '&width=' + this.width;
-  src += '&height=' + this.height;
-  if (this.quality > 0) {
-    src += '&quality=' + this.quality;
-  }
-  if (this.invert) {
-    src += '&invert=' + this.invert;
-  }
-  this.image.src = src;
-  // emit an event for the change
-  this.emit('change', topic);
-};
+
 
 /**
- * @author Russell Toris - russell.toris@gmail.com
+ * @author Carl Saldanha csaldanha3@gatech.edu
  */
 
 /**
- * A button renders a button with text to an internal canvas. The width will scale to fit the text.
+ * A select button will render on top of the cavnas
  *
  * @constructor
  * @param options - possible keys include:
  *   * text - the text to display on the button
  *   * height - the height of the button
+ *   * labels - labels of the system
+ *   * topics - the streams available
+ *   * currentTopic - the current topic
  */
 MJPEGCANVAS.Button = function(options) {
   options = options || {};
@@ -352,39 +275,62 @@ MJPEGCANVAS.Button = function(options) {
   this.height = options.height;
 
   // used to draw the text internally
-  this.canvas = document.createElement('canvas');
-  this.redraw();
+  this.rootElement = document.createElement('span');
+  this.redraw(options);
+
 };
 
 /**
- * Redraw the button to the internal canvas.
+ * Redraw the button .
+ * @param options - possible keys include:
+ *   * @param options - possible keys include:
+ *   * currentTopic - the current topic
+ *   * labels - labels of the system
+ *   * topics - the streams available
  */
-MJPEGCANVAS.Button.prototype.redraw = function() {
-  var context = this.canvas.getContext('2d');
+MJPEGCANVAS.Button.prototype.redraw = function(options) {
+  //this.rootElement.innerHTML = '<h3>Camera</h3><hr />';
+  var streamLabel = document.createElement('label');
+  streamLabel.setAttribute('for', 'stream');
+  streamLabel.innerHTML = 'Streams: ';
+  this.rootElement.appendChild(streamLabel);
+  var streamMenu = document.createElement('select');
+  streamMenu.setAttribute('name', 'stream');
+  // add each option
+  for ( var i = 0; i < options.topics.length; i++) {
+    //We cannot use Side view in this experiment.
+      var option = document.createElement('option');
+      // check if this is the selected option
+      if (options.topics[i] === options.currentTopic) {
+        option.setAttribute('selected', 'selected');
+      }
+      option.setAttribute('value', options.topics[i]);
+    
+      // check for a label
+      if (options.labels) {
+        option.innerHTML = options.labels[i];
+      } 
+      else {
+        option.innerHTML +=  options.topics[i];
+      }
+      streamMenu.appendChild(option);
 
-  // determine text size
-  var buttonPadding = this.height * 0.33;
-  context.font = (this.height - buttonPadding) + 'px Verdana';
-  this.width = context.measureText(this.text).width + buttonPadding * 2;
-  this.canvas.width = this.width;
-  this.canvas.height = this.height;
+  }
+  streamLabel.appendChild(streamMenu)
+  streamMenu.addEventListener('click', function() {
+    var topic = streamMenu.options[streamMenu.selectedIndex].value;
+    // make sure it is a new stream
+    console.log(topic);
+    if (topic !== options.currentTopic) {
 
-  // create the image
-  var image = new Image();
-  // keep the base64 representation internally
-  image.src = 'data:image/png;base64,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';
-
-  // draw the button
-  context.drawImage(image, 0, 0, this.width, this.height);
-
-  // draw the text
-  context.font = (this.height - buttonPadding) + 'px Verdana';
-  context.fillStyle = '#121212';
-  context.fillText(this.text, buttonPadding, this.height - buttonPadding);
+      options.viewer.changeStream(topic);
+    }
+  }, false);
+ 
 };
 
 /**
- * @author Russell Toris - russell.toris@gmail.com
+ * @author Russell Toris - rctoris@wpi.edu
  */
 
 /**

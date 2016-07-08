@@ -3813,9 +3813,9 @@ ROS3D.Viewer = function(options) {
   this.scene = new THREE.Scene();
   //a parent object in case we need to change the origin of the scene
   this.rootObject = new THREE.Object3D();
-  this.rootObject.translateY(originPosition.x);
+  this.rootObject.translateX(originPosition.x);
   this.rootObject.translateY(originPosition.y);
-  this.rootObject.translateY(originPosition.z);
+  this.rootObject.translateZ(originPosition.z);
 
    this.scene.add(this.rootObject);
 
