@@ -3786,7 +3786,13 @@ ROS3D.Viewer = function(options) {
   if (interactive===null){
     interactive=true;
   }
+  console.log(interactive);
   var originPosition = options.originPosition || {
+    x : 0,
+    y : 0,
+    z : 0
+  };
+  var originRotation = options.originRotation || {
     x : 0,
     y : 0,
     z : 0
@@ -3816,6 +3822,10 @@ ROS3D.Viewer = function(options) {
   this.rootObject.translateX(originPosition.x);
   this.rootObject.translateY(originPosition.y);
   this.rootObject.translateZ(originPosition.z);
+
+  this.rootObject.rotateX(originRotation.x);
+  this.rootObject.rotateZ(originRotation.y);
+  this.rootObject.rotateY(originRotation.z);
 
    this.scene.add(this.rootObject);
 

@@ -29,7 +29,7 @@
       host : 'rail-engine.cc.gatech.edu',
       port : 8080,
       quality: '90',
-      topics: ['/camera/rgb/image_rect_color','/kinect2/hd/image_color'],
+      topics: ['/kinect2/hd/image_color','/camera/rgb/image_rect_color'],
       labels: ['Overhead','Side']
     });
 
@@ -47,10 +47,12 @@
       alpha: 0.1,
       near: 0.1, //from P. Grice's code  https://github.com/gt-ros-pkg/hrl-assistive/blob/indigo-devel/assistive_teleop/vci-www/js/video/viewer.js
       far: 50,
-      fov: 50, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
+      fov: 60,//50, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
       cameraPose:{x:0,y:0,z:1},
-      originPosition:{x:0,y:0.36,z:0},
-      interactive:false
+      //originPosition:{x:0,y:0.36,z:0},
+      originPosition:{x:0.25,y:0,z:-0.5},
+      originRotation:{x:-1.5708,y:0,z:-1.5708},
+      interactive:true
      });
 
     ROSLIB.TFClient.prototype.processTFArray = function(tf) {
@@ -83,16 +85,23 @@
       angularThres : 0.01,
       transThres : 0.01,
       rate : 10.0,
-      fixedFrame : '/jaco_base_link'
+      fixedFrame : '/table_base_link'
     });
 
 
-
-    var viewerHandle = new ROS3D.ViewerHandle({
+    //asus
+    // var viewerHandle = new ROS3D.ViewerHandle({
+    //   ros : ros,
+    //   tfClient : tfClient,
+    //   camera : viewer.camera,
+    //   frame : '/camera_rgb_optical_frame'
+    // });
+    //kinect
+     viewerHandle = new ROS3D.ViewerHandle({
       ros : ros,
       tfClient : tfClient,
       camera : viewer.camera,
-      frame : '/camera_rgb_optical_frame'
+      frame : '/table_base_link'
     });
 
     // Setup the marker client.
