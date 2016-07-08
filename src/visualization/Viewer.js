@@ -18,6 +18,7 @@
  *  * antialias (optional) - if antialiasing should be used
  *  * intensity (optional) - the lighting intensity setting to use
  *  * cameraPosition (optional) - the starting position of the camera
+ *  * originPosition (optional) - the position of the origin with respect to the scene
  *  * interactive (optional) - specifies whether the user can interact with the camera
  */
 ROS3D.Viewer = function(options) {
@@ -33,8 +34,15 @@ ROS3D.Viewer = function(options) {
   var near = options.near || 0.01;
   var far = options.far || 1000;
   var fov = options.fov || 40;
-  var interactive = options.interactive ||true;
-  
+  var interactive = options.interactive;
+  if (interactive===null){
+    interactive=true;
+  }
+  var originPosition = options.originPosition || {
+    x : 0,
+    y : 0,
+    z : 0
+  };
   var cameraPosition = options.cameraPose || {
     x : 3,
     y : 3,
@@ -55,12 +63,21 @@ ROS3D.Viewer = function(options) {
 
   // create the global scene
   this.scene = new THREE.Scene();
+  //a parent object in case we need to change the origin of the scene
+  this.rootObject = new THREE.Object3D();
+  this.rootObject.translateY(originPosition.x);
+  this.rootObject.translateY(originPosition.y);
+  this.rootObject.translateY(originPosition.z);
+
+   this.scene.add(this.rootObject);
 
   // create the global camera
   this.camera = new THREE.PerspectiveCamera(fov, width / height, near, far);
   this.camera.position.x = cameraPosition.x;
   this.camera.position.y = cameraPosition.y;
   this.camera.position.z = cameraPosition.z;
+  
+
   // add controls to the camera
   this.cameraControls = new ROS3D.OrbitControls({
     scene : this.scene,
@@ -68,19 +85,27 @@ ROS3D.Viewer = function(options) {
   });
   this.cameraControls.userZoomSpeed = cameraZoomSpeed;
 
+
   // lights
   this.scene.add(new THREE.AmbientLight(0x555555));
   this.directionalLight = new THREE.DirectionalLight(0xffffff, intensity);
-  this.scene.add(this.directionalLight);
+  this.rootObject.add(this.directionalLight);
+
 
   // propagates mouse events to three.js objects
+
   this.selectableObjects = new THREE.Object3D();
-  this.scene.add(this.selectableObjects);
+
+  var fallbackObject=null;
+  if (interactive){
+    fallbackObject=this.cameraControls;
+  }
+  this.rootObject.add(this.selectableObjects);
   var mouseHandler = new ROS3D.MouseHandler({
     renderer : this.renderer,
     camera : this.camera,
     rootObject : this.selectableObjects,
-    fallbackTarget : this.cameraControls
+    fallbackObject:fallbackObject
   });
 
   // highlights the receiver of mouse events
@@ -127,7 +152,7 @@ ROS3D.Viewer.prototype.addObject = function(object, selectable) {
   if (selectable) {
     this.selectableObjects.add(object);
   } else {
-    this.scene.add(object);
+    this.rootObject.add(object);
   }
 };
 

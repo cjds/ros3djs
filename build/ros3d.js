@@ -1343,11 +1343,14 @@ ROS3D.InteractiveMarkerHandle.prototype.setPoseFromClient = function(event) {
   // apply the transform
   this.pose = new ROSLIB.Pose(event);
   var inv = this.tfTransform.clone();
+
   inv.rotation.invert();
   inv.translation.multiplyQuaternion(inv.rotation);
   inv.translation.x *= -1;
   inv.translation.y *= -1;
   inv.translation.z *= -1;
+
+
   this.pose.applyTransform(inv);
 
   // send feedback to the server
@@ -3763,6 +3766,8 @@ ROS3D.SceneNode.prototype.unsubscribeTf = function() {
  *  * antialias (optional) - if antialiasing should be used
  *  * intensity (optional) - the lighting intensity setting to use
  *  * cameraPosition (optional) - the starting position of the camera
+ *  * originPosition (optional) - the position of the origin with respect to the scene
+ *  * interactive (optional) - specifies whether the user can interact with the camera
  */
 ROS3D.Viewer = function(options) {
   var that = this;
@@ -3777,7 +3782,15 @@ ROS3D.Viewer = function(options) {
   var near = options.near || 0.01;
   var far = options.far || 1000;
   var fov = options.fov || 40;
-  
+  var interactive = options.interactive;
+  if (interactive===null){
+    interactive=true;
+  }
+  var originPosition = options.originPosition || {
+    x : 0,
+    y : 0,
+    z : 0
+  };
   var cameraPosition = options.cameraPose || {
     x : 3,
     y : 3,
@@ -3798,12 +3811,21 @@ ROS3D.Viewer = function(options) {
 
   // create the global scene
   this.scene = new THREE.Scene();
+  //a parent object in case we need to change the origin of the scene
+  this.rootObject = new THREE.Object3D();
+  this.rootObject.translateY(originPosition.x);
+  this.rootObject.translateY(originPosition.y);
+  this.rootObject.translateY(originPosition.z);
+
+   this.scene.add(this.rootObject);
 
   // create the global camera
   this.camera = new THREE.PerspectiveCamera(fov, width / height, near, far);
   this.camera.position.x = cameraPosition.x;
   this.camera.position.y = cameraPosition.y;
   this.camera.position.z = cameraPosition.z;
+  
+
   // add controls to the camera
   this.cameraControls = new ROS3D.OrbitControls({
     scene : this.scene,
@@ -3811,19 +3833,27 @@ ROS3D.Viewer = function(options) {
   });
   this.cameraControls.userZoomSpeed = cameraZoomSpeed;
 
+
   // lights
   this.scene.add(new THREE.AmbientLight(0x555555));
   this.directionalLight = new THREE.DirectionalLight(0xffffff, intensity);
-  this.scene.add(this.directionalLight);
+  this.rootObject.add(this.directionalLight);
+
 
   // propagates mouse events to three.js objects
+
   this.selectableObjects = new THREE.Object3D();
-  this.scene.add(this.selectableObjects);
+
+  var fallbackObject=null;
+  if (interactive){
+    fallbackObject=this.cameraControls;
+  }
+  this.rootObject.add(this.selectableObjects);
   var mouseHandler = new ROS3D.MouseHandler({
     renderer : this.renderer,
     camera : this.camera,
     rootObject : this.selectableObjects,
-    fallbackTarget : this.cameraControls
+    fallbackObject:fallbackObject
   });
 
   // highlights the receiver of mouse events
@@ -3870,7 +3900,7 @@ ROS3D.Viewer.prototype.addObject = function(object, selectable) {
   if (selectable) {
     this.selectableObjects.add(object);
   } else {
-    this.scene.add(object);
+    this.rootObject.add(object);
   }
 };
 
@@ -3915,11 +3945,7 @@ ROS3D.ViewerHandle = function(options) {
   this.camera = options.camera;
   this.frame = options.frame;
   this.tfTransform = new ROSLIB.Transform();
-  this.camera.zoom = 1.25;
-  // this.camera.projectionMatrix.elements = [1.1129, 0,0,0,0,2.009,0,0,0,0,-1.001, -1, 0,0,-0.0400266,0];
-  // this.camera.up = new THREE.Vector3(0,0,1);
-
-  // this.camera.updateProjectionMatrix();
+  //this.camera.zoom = 1.25;
 
   // start by setting the pose
   this.tfUpdateBound = this.tfUpdate.bind(this);
@@ -3946,13 +3972,20 @@ ROS3D.ViewerHandle.prototype.emitServerPoseUpdate = function() {
   console.log('Transfrom is transforming');
   console.log(this.camera.projectionMatrix);
   var inv = this.tfTransform.clone();
+
   inv.rotation.invert();
+
   inv.translation.multiplyQuaternion(inv.rotation);
   inv.translation.x *= -1;
   inv.translation.y *= -1;
   inv.translation.z *= -1;
   this.camera.quaternion.set(inv.rotation.x,inv.rotation.y,inv.rotation.z,inv.rotation.w);
   this.camera.position.set(inv.translation.x,inv.translation.y,inv.translation.z);
+  this.camera.updateMatrix();
+  this.camera.updateMatrixWorld();
+  var out = this.camera.localToWorld(new THREE.Vector3(1,0,0));
+  this.camera.lookAt(out);
+
 };
 
 /**

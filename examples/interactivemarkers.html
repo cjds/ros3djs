@@ -46,9 +46,11 @@
       antialias : true,
       alpha: 0.1,
       near: 0.1, //from P. Grice's code  https://github.com/gt-ros-pkg/hrl-assistive/blob/indigo-devel/assistive_teleop/vci-www/js/video/viewer.js
-      far: 40,
+      far: 50,
       fov: 50, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
-      cameraPose:{x:2,y:2,z:2}
+      cameraPose:{x:0,y:0,z:1},
+      originPosition:{x:0,y:0.36,z:0},
+      interactive:false
      });
 
     ROSLIB.TFClient.prototype.processTFArray = function(tf) {
@@ -61,9 +63,7 @@
         }
         var info = this.frameInfos[frameID];
         if (info) {
-          transform.transform.translation.z-=0.90
-         // transform.transform.translation.x+=0.02
-         // transform.transform.translation.y-=0.12
+          // transform.transform.translation.z-=0.90
           info.transform = new ROSLIB.Transform({
             translation : transform.transform.translation,
             rotation : transform.transform.rotation
@@ -74,6 +74,8 @@
         }
       }, this);
   };
+
+
 
     // Setup a client to listen to TFs.
     var tfClient = new ROSLIB.TFClient({
@@ -106,13 +108,13 @@
 </head>
 
 <body onload="init()">
-  <h1>Simple Interactive Marker Example</h1>
+  <h1>Simple Interactive Marker Example on a Canvas</h1>
   <p>Run the following commands in the terminal then refresh this page.</p>
   <ol
 >    <li><tt>roslaunch nimbus_bringup nimbus_bringup.launch</tt></li>
     <li><tt>roslaunch nimbus_web_interfaces web_services.launch</tt></li>
     <li><tt>rosrun interactive_marker_proxy proxy topic_ns:=/nimbus_interactive_manipulation
-        target_frame:=/jaco_ee</tt></li>
+        target_frame:=/jaco_ee_link</tt></li>
   </ol>
   <div id="markers"></div>
 </body>

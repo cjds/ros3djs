@@ -27,11 +27,7 @@ ROS3D.ViewerHandle = function(options) {
   this.camera = options.camera;
   this.frame = options.frame;
   this.tfTransform = new ROSLIB.Transform();
-  this.camera.zoom = 1.25;
-  // this.camera.projectionMatrix.elements = [1.1129, 0,0,0,0,2.009,0,0,0,0,-1.001, -1, 0,0,-0.0400266,0];
-  // this.camera.up = new THREE.Vector3(0,0,1);
-
-  // this.camera.updateProjectionMatrix();
+  //this.camera.zoom = 1.25;
 
   // start by setting the pose
   this.tfUpdateBound = this.tfUpdate.bind(this);
@@ -57,17 +53,21 @@ ROS3D.ViewerHandle.prototype.unsubscribeTf = function() {
 ROS3D.ViewerHandle.prototype.emitServerPoseUpdate = function() {
   console.log('Transfrom is transforming');
   console.log(this.camera.projectionMatrix);
-  transform.transform.translation.z-=0.90
-// transform.transform.translation.x+=0.02
-// transform.transform.translation.y-=0.12
   var inv = this.tfTransform.clone();
+
   inv.rotation.invert();
+
   inv.translation.multiplyQuaternion(inv.rotation);
   inv.translation.x *= -1;
   inv.translation.y *= -1;
   inv.translation.z *= -1;
   this.camera.quaternion.set(inv.rotation.x,inv.rotation.y,inv.rotation.z,inv.rotation.w);
   this.camera.position.set(inv.translation.x,inv.translation.y,inv.translation.z);
+  this.camera.updateMatrix();
+  this.camera.updateMatrixWorld();
+  var out = this.camera.localToWorld(new THREE.Vector3(1,0,0));
+  this.camera.lookAt(out);
+
 };
 
 /**
