@@ -51,12 +51,8 @@ ROS3D.ViewerHandle.prototype.unsubscribeTf = function() {
  * Emit the new pose that has come from the server.
  */
 ROS3D.ViewerHandle.prototype.emitServerPoseUpdate = function() {
-  console.log('Transfrom is transforming');
-  console.log(this.camera.projectionMatrix);
   var inv = this.tfTransform.clone();
-
   inv.rotation.invert();
-
   inv.translation.multiplyQuaternion(inv.rotation);
   inv.translation.x *= -1;
   inv.translation.y *= -1;

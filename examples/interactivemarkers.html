@@ -29,8 +29,8 @@
       host : 'rail-engine.cc.gatech.edu',
       port : 8080,
       quality: '90',
-      topics: ['/kinect2/hd/image_color','/camera/rgb/image_rect_color'],
-      labels: ['Overhead','Side']
+      topics: ['/camera/rgb/image_rect_color','/kinect2/hd/image_color'],
+      labels: ['Side','Overhead']
     });
 
     // Connect to ROS.
@@ -47,13 +47,15 @@
       alpha: 0.1,
       near: 0.1, //from P. Grice's code  https://github.com/gt-ros-pkg/hrl-assistive/blob/indigo-devel/assistive_teleop/vci-www/js/video/viewer.js
       far: 50,
-      fov: 60,//50, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
+      fov: 50,//50, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
       cameraPose:{x:0,y:0,z:1},
-      //originPosition:{x:0,y:0.36,z:0},
-      originPosition:{x:0.25,y:0,z:-0.5},
-      originRotation:{x:-1.5708,y:0,z:-1.5708},
+      originPosition:{x:0,y:0.36,z:0},
+      //originPosition:{x:0.25,y:0,z:-0.5}, //kinect 2 
+      //originRotation:{x:-1.5708,y:0,z:-1.5708}, //kinect 2
       interactive:true
      });
+
+    //viewer.changePosition({x:0,y:0.36,z:0},{x:0,y:0,z:0});
 
     ROSLIB.TFClient.prototype.processTFArray = function(tf) {
       var that = this;
@@ -124,6 +126,8 @@
     <li><tt>roslaunch nimbus_web_interfaces web_services.launch</tt></li>
     <li><tt>rosrun interactive_marker_proxy proxy topic_ns:=/nimbus_interactive_manipulation
         target_frame:=/jaco_ee_link</tt></li>
+    Assuming that you're working from the ASUS Branch, run the kinect
+    <li><tt>rosrun kinect2_bridge kinect2_bridge</tt></li>
   </ol>
   <div id="markers"></div>
 </body>
