@@ -39,7 +39,7 @@ ROS3D.Viewer = function(options) {
   if (interactive===null){
     interactive=true;
   }
-  console.log(interactive);
+
   var originPosition = options.originPosition || {
     x : 0,
     y : 0,
@@ -56,6 +56,9 @@ ROS3D.Viewer = function(options) {
     z : 3
   };
   var cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
+
+  var cameras = [];
+  var currentCamera=0;
 
   // create the canvas to render to
   this.renderer = new THREE.WebGLRenderer({
@@ -83,16 +86,22 @@ ROS3D.Viewer = function(options) {
    this.scene.add(this.rootObject);
 
   // create the global camera
-  this.camera = new THREE.PerspectiveCamera(fov, width / height, near, far);
-  this.camera.position.x = cameraPosition.x;
-  this.camera.position.y = cameraPosition.y;
-  this.camera.position.z = cameraPosition.z;
-  
+  this.cameras.push(new ROS3D.ViewerCamera({
+    near :near,
+    far :far,
+    fov: fov,
+    interactive :interactive,
+    aspect : width / height,
+    originPosition : originPosition,
+    originRotation : originRotation
+  }));
+
+  this.cameraID=0;
 
   // add controls to the camera
   this.cameraControls = new ROS3D.OrbitControls({
     scene : this.scene,
-    camera : this.camera
+    camera : this.cameras[this.cameraID].camera
   });
   this.cameraControls.userZoomSpeed = cameraZoomSpeed;
 
@@ -137,7 +146,7 @@ ROS3D.Viewer = function(options) {
 
     // set the scene
     that.renderer.clear(true, true, true);
-    that.renderer.render(that.scene, that.camera);
+    that.renderer.render(that.scene, that.cameras[that.cameraID].camera);
 
     // render any mouseovers
     that.highlighter.renderHighlight(that.renderer, that.scene, that.camera);
@@ -164,6 +173,17 @@ ROS3D.Viewer.prototype.addObject = function(object, selectable) {
     this.selectableObjects.add(object);
   } else {
     this.rootObject.add(object);
+  }
+};
+
+/**
+ * change the camera of the global scene in the viewer
+ *
+ * @param cameraID The ID of the camera from cameras
+ */
+ROS3D.Viewer.prototype.changeCamera = function(cameraID) {
+  if (cameraID<this.cameras.length && cameraID>=0){
+    this.cameraID=cameraID;
   }
 };
 

@@ -23,11 +23,7 @@ ROS3D.ViewerCamera = function(options) {
   var far = options.far || 1000;
   var fov = options.fov || 40;
   var interactive = options.interactive;
-  if (interactive===null){
-    interactive=true;
-  }
-
-  console.log(interactive);
+  var aspect = options.aspect;
   var originPosition = options.originPosition || {
     x : 0,
     y : 0,
@@ -38,34 +34,10 @@ ROS3D.ViewerCamera = function(options) {
     y : 0,
     z : 0
   };
-  var cameraPosition = options.cameraPose || {
-    x : 3,
-    y : 3,
-    z : 3
-  };
   var cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
-  var aspect = options.aspect;
-
-  // create the global scene
-  this.scene = new THREE.Scene();
-  //a parent object in case we need to change the origin of the scene
-  this.rootObject = new THREE.Object3D();
-  this.rootObject.translateX(originPosition.x);
-  this.rootObject.translateY(originPosition.y);
-  this.rootObject.translateZ(originPosition.z);
-
-  this.rootObject.rotateX(originRotation.x);
-  this.rootObject.rotateZ(originRotation.y);
-  this.rootObject.rotateY(originRotation.z);
-
-  this.scene.add(this.rootObject);
 
   // create the global camera
   this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  this.camera.position.x = cameraPosition.x;
-  this.camera.position.y = cameraPosition.y;
-  this.camera.position.z = cameraPosition.z;
-  
 
   // add controls to the camera
   this.cameraControls = new ROS3D.OrbitControls({
@@ -74,25 +46,6 @@ ROS3D.ViewerCamera = function(options) {
   });
   this.cameraControls.userZoomSpeed = cameraZoomSpeed;
   // propagates mouse events to three.js objects
-
-  this.selectableObjects = new THREE.Object3D();
-
-  var fallbackObject=null;
-  if (interactive){
-    fallbackObject=this.cameraControls;
-  }
-  // this.rootObject.add(this.selectableObjects);
-  // var mouseHandler = new ROS3D.MouseHandler({
-  //   renderer : this.renderer,
-  //   camera : this.camera,
-  //   rootObject : this.selectableObjects,
-  //   fallbackObject:fallbackObject
-  // });
-
-  // highlights the receiver of mouse events
-  // this.highlighter = new ROS3D.Highlighter({
-  //   mouseHandler : mouseHandler
-  // });
 
   /**
    * Renders the associated scene to the viewer.
@@ -106,30 +59,4 @@ ROS3D.ViewerCamera = function(options) {
   }
   // begin the animation
   draw();
-};
-
-/**
- * Add the given THREE Object3D to the global scene in the viewer.
- *
- * @param object - the THREE Object3D to add
- * @param selectable (optional) - if the object should be added to the selectable list
- */
-ROS3D.ViewerCamera.prototype.addObject = function(object, selectable) {
-  if (selectable) {
-    this.selectableObjects.add(object);
-  } else {
-    this.rootObject.add(object);
-  }
-};
-
-/**
- * Resize 3D viewer
- *
- * @param width - new width value
- * @param height - new height value
- */
-ROS3D.Viewer.prototype.resize = function(width, height) {
-  this.camera.aspect = width / height;
-  this.camera.updateProjectionMatrix();
-  this.renderer.setSize(width, height);
 };
