@@ -38,25 +38,10 @@ ROS3D.ViewerCamera = function(options) {
 
   // create the global camera
   this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-
-  // add controls to the camera
-  this.cameraControls = new ROS3D.OrbitControls({
-    scene : this.scene,
-    camera : this.camera
+  console.log(options.frame);
+  var viewerHandle=new ROS3D.ViewerHandle({
+    tfClient:options.tfClient,
+    camera:this.camera,
+    frame:options.frame
   });
-  this.cameraControls.userZoomSpeed = cameraZoomSpeed;
-  // propagates mouse events to three.js objects
-
-  /**
-   * Renders the associated scene to the viewer.
-   */
-  function draw() {
-    // update the controls
-    that.cameraControls.update();
-    
-    // draw the frame
-    requestAnimationFrame(draw);
-  }
-  // begin the animation
-  draw();
 };

@@ -38,49 +38,6 @@
       url : 'ws://localhost:9090'
     });
 
-    // Create the main viewer
-    var viewer = new ROS3D.Viewer({
-      divID : 'markers',
-      width : 800,
-      height : 600,
-      antialias : true,
-      alpha: 0.1,
-      near: 0.1, //from P. Grice's code  https://github.com/gt-ros-pkg/hrl-assistive/blob/indigo-devel/assistive_teleop/vci-www/js/video/viewer.js
-      far: 50,
-      fov: 50,//50, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
-      cameraPose:{x:0,y:0,z:1},
-      originPosition:{x:0,y:0.36,z:0},
-      //originPosition:{x:0.25,y:0,z:-0.5}, //kinect 2 
-      //originRotation:{x:-1.5708,y:0,z:-1.5708}, //kinect 2
-      interactive:true
-     });
-
-    //viewer.changePosition({x:0,y:0.36,z:0},{x:0,y:0,z:0});
-
-    ROSLIB.TFClient.prototype.processTFArray = function(tf) {
-      var that = this;
-      tf.transforms.forEach(function(transform) {
-        var frameID = transform.child_frame_id;
-        if (frameID[0] === '/')
-        {
-          frameID = frameID.substring(1);
-        }
-        var info = this.frameInfos[frameID];
-        if (info) {
-          // transform.transform.translation.z-=0.90
-          info.transform = new ROSLIB.Transform({
-            translation : transform.transform.translation,
-            rotation : transform.transform.rotation
-          });
-          info.cbs.forEach(function(cb) {
-            cb(info.transform);
-          });
-        }
-      }, this);
-  };
-
-
-
     // Setup a client to listen to TFs.
     var tfClient = new ROSLIB.TFClient({
       ros : ros,
@@ -99,13 +56,43 @@
     //   frame : '/camera_rgb_optical_frame'
     // });
     //kinect
-     viewerHandle = new ROS3D.ViewerHandle({
-      ros : ros,
-      tfClient : tfClient,
-      camera : viewer.camera,
-      frame : '/table_base_link'
-    });
+    //  viewerHandle = new ROS3D.ViewerHandle({
+    //   ros : ros,
+    //   tfClient : tfClient,
+    //   camera : viewer.camera,
+    //   frame : '/table_base_link'
+    // });
 
+
+    // Create the main viewer
+    var viewer = new ROS3D.Viewer({
+      divID : 'markers',
+      width : 800,
+      height : 600,
+      antialias : true,
+      alpha: 0.1,
+      near: 0.1, //from P. Grice's code  https://github.com/gt-ros-pkg/hrl-assistive/blob/indigo-devel/assistive_teleop/vci-www/js/video/viewer.js
+      far: 50,
+      fov: 50,//50, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
+      cameraPose:{x:0,y:0,z:1},
+      originPosition:{x:0,y:0.36,z:0},
+      //originPosition:{x:0.25,y:0,z:-0.5}, //kinect 2 
+      //originRotation:{x:-1.5708,y:0,z:-1.5708}, //kinect 2
+      interactive:true,
+      frame: '/camera_rgb_optical_frame',
+      tfClient: tfClient
+     });
+
+    viewer.addCamera(0.1,50,60,false,(viewer.width/viewer.height),{x:0.25,y:0,z:-0.5},{x:-1.5708,y:0,z:-1.5708},tfClient,'/table_base_link')//add the kinect 2 in
+
+    mjpegcanvas.on('change',function(topic){
+      if(topic =='Overhead'){
+        viewer.changeCamera(0);
+      } else{
+        viewer.changeCamera(1);
+      }
+    });
+    
     // Setup the marker client.
     var imClient = new ROS3D.InteractiveMarkerClient({
       ros : ros,

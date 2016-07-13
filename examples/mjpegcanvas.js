@@ -219,7 +219,6 @@ MJPEGCANVAS.Viewer = function(options) {
 
 
   this.changeStream = function(topic) {
-    console.log(topic)
     this.image = new Image();
     // create the image to hold the stream
     var src = 'http://' + this.host + ':' + this.port + '/stream?topic=' + topic;
@@ -317,14 +316,8 @@ MJPEGCANVAS.Button.prototype.redraw = function(options) {
 
   }
   streamLabel.appendChild(streamMenu)
-  streamMenu.addEventListener('click', function() {
-    var topic = streamMenu.options[streamMenu.selectedIndex].value;
-    // make sure it is a new stream
-    console.log(topic);
-    if (topic !== options.currentTopic) {
-
-      options.viewer.changeStream(topic);
-    }
+  streamMenu.addEventListener('change', function() {
+      options.viewer.changeStream(streamMenu.value);
   }, false);
  
 };
