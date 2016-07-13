@@ -3833,8 +3833,8 @@ ROS3D.Viewer = function(options) {
   this.rootObject.translateZ(originPosition.z);
 
   this.rootObject.rotateX(originRotation.x);
-  this.rootObject.rotateZ(originRotation.y);
-  this.rootObject.rotateY(originRotation.z);
+  this.rootObject.rotateY(originRotation.y);
+  this.rootObject.rotateZ(originRotation.z);
 
   this.scene.add(this.rootObject);
 
@@ -3938,13 +3938,16 @@ ROS3D.Viewer.prototype.changeCamera = function(cameraID) {
     this.camera = this.cameras[cameraID].camera;
     var position = this.cameras[cameraID].originPosition;
     var rotation = this.cameras[cameraID].originRotation;
-    this.rootObject.translateX(originPosition.x);
-    this.rootObject.translateY(originPosition.y);
-    this.rootObject.translateZ(originPosition.z);
+    this.rootObject.rotateX(this.rootObject.rotation.x);
+    this.rootObject.rotateY(this.rootObject.rotation.y);
+    this.rootObject.rotateZ(this.rootObject.rotation.z);
+    this.rootObject.position.setX(position.x);
+    this.rootObject.position.setY(position.y);
+    this.rootObject.position.setZ(position.z);
 
-    this.rootObject.rotateX(originRotation.x);
-    this.rootObject.rotateZ(originRotation.y);
-    this.rootObject.rotateY(originRotation.z);
+    this.rootObject.rotateX(rotation.x);
+    this.rootObject.rotateY(rotation.y);
+    this.rootObject.rotateZ(rotation.z);
     }
 };
 
@@ -4005,21 +4008,20 @@ ROS3D.ViewerCamera = function(options) {
   var fov = options.fov || 40;
   var interactive = options.interactive;
   var aspect = options.aspect;
-  var originPosition = options.originPosition || {
+  this.originPosition = options.originPosition || {
     x : 0,
     y : 0,
     z : 0
   };
-  var originRotation = options.originRotation || {
+  this.originRotation = options.originRotation || {
     x : 0,
     y : 0,
     z : 0
   };
-  var cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
+  this.cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
 
   // create the global camera
   this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  console.log(options.frame);
   var viewerHandle=new ROS3D.ViewerHandle({
     tfClient:options.tfClient,
     camera:this.camera,

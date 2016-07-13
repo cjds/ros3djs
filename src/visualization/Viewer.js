@@ -85,8 +85,8 @@ ROS3D.Viewer = function(options) {
   this.rootObject.translateZ(originPosition.z);
 
   this.rootObject.rotateX(originRotation.x);
-  this.rootObject.rotateZ(originRotation.y);
-  this.rootObject.rotateY(originRotation.z);
+  this.rootObject.rotateY(originRotation.y);
+  this.rootObject.rotateZ(originRotation.z);
 
   this.scene.add(this.rootObject);
 
@@ -190,13 +190,16 @@ ROS3D.Viewer.prototype.changeCamera = function(cameraID) {
     this.camera = this.cameras[cameraID].camera;
     var position = this.cameras[cameraID].originPosition;
     var rotation = this.cameras[cameraID].originRotation;
-    this.rootObject.translateX(originPosition.x);
-    this.rootObject.translateY(originPosition.y);
-    this.rootObject.translateZ(originPosition.z);
+    this.rootObject.rotateX(this.rootObject.rotation.x);
+    this.rootObject.rotateY(this.rootObject.rotation.y);
+    this.rootObject.rotateZ(this.rootObject.rotation.z);
+    this.rootObject.position.setX(position.x);
+    this.rootObject.position.setY(position.y);
+    this.rootObject.position.setZ(position.z);
 
-    this.rootObject.rotateX(originRotation.x);
-    this.rootObject.rotateZ(originRotation.y);
-    this.rootObject.rotateY(originRotation.z);
+    this.rootObject.rotateX(rotation.x);
+    this.rootObject.rotateY(rotation.y);
+    this.rootObject.rotateZ(rotation.z);
     }
 };
 
