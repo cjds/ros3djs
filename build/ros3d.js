@@ -3938,13 +3938,13 @@ ROS3D.Viewer.prototype.changeCamera = function(cameraID) {
     this.camera = this.cameras[cameraID].camera;
     var position = this.cameras[cameraID].originPosition;
     var rotation = this.cameras[cameraID].originRotation;
-    this.rootObject.rotateX(this.rootObject.rotation.x);
-    this.rootObject.rotateY(this.rootObject.rotation.y);
-    this.rootObject.rotateZ(this.rootObject.rotation.z);
+    //move root object rotation to 0,0,0
+    this.rootObject.rotateX(-this.rootObject.rotation.x);
+    this.rootObject.rotateY(-this.rootObject.rotation.y);
+    this.rootObject.rotateZ(-this.rootObject.rotation.z);
     this.rootObject.position.setX(position.x);
     this.rootObject.position.setY(position.y);
     this.rootObject.position.setZ(position.z);
-
     this.rootObject.rotateX(rotation.x);
     this.rootObject.rotateY(rotation.y);
     this.rootObject.rotateZ(rotation.z);

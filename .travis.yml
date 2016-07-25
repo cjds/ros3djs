@@ -7,6 +7,7 @@ branches:
   only:
     - master
     - develop
+    - interactive_marker_on_2d_video
 
 before_script:
   - npm install -g grunt-cli
