@@ -74,18 +74,17 @@
       near: 0.1, //from P. Grice's code  https://github.com/gt-ros-pkg/hrl-assistive/blob/indigo-devel/assistive_teleop/vci-www/js/video/viewer.js
       far: 50,
       fov: 50,//50, //from ASUS documentation -https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/
-      cameraPose:{x:0,y:0,z:1},
-      originPosition:{x:0,y:0.36,z:0},
-      //originPosition:{x:0.25,y:0,z:-0.5}, //kinect 2 
-      //originRotation:{x:-1.5708,y:0,z:-1.5708}, //kinect 2
+      cameraPosition:{x:0,y:0.36,z:0},
+      //cameraPosition:{x:0.25,y:0,z:-0.5}, //kinect 2 
+      //cameraRotation:{x:-1.5708,y:0,z:-1.5708}, //kinect 2
       interactive:true,
       frame: '/camera_rgb_optical_frame',
       tfClient: tfClient
      });
 
-    viewer.addCamera(0.1,50,60,false,(viewer.width/viewer.height),{x:0,y:0,z:-1},{x:0,y:1.5708,z:-1.5708},tfClient,'/jaco_base_link');//@TODO Correct parameters for JACO
-    //add the kinect 2 in
-        viewer.changeCamera(1);
+    // viewer.addCamera(0.1,50,60,false,(viewer.width/viewer.height),{x:0,y:0,z:-1},{x:0,y:1.5708,z:-1.5708},tfClient,'/jaco_base_link');//@TODO Correct parameters for JACO
+    // //add the kinect 2 in
+    //     viewer.changeCamera(1);
 
     mjpegcanvas.on('change',function(topic){
       if(topic =='/camera/rgb/image_rect_color'){

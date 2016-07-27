@@ -27,15 +27,24 @@ ROS3D.ViewerHandle = function(options) {
   this.camera = options.camera;
   this.frame = options.frame;
   this.tfTransform = new ROSLIB.Transform();
+  this.cameraPosition = options.cameraPosition || {
+    x : 3,
+    y : 3,
+    z : 3
+  };
+  this.cameraRotation = options.cameraRotation || {
+    x : 0,
+    y : 0,
+    z : 0
+  };
   //this.camera.zoom = 1.25;
 
   // start by setting the pose
   this.tfUpdateBound = this.tfUpdate.bind(this);
 
   //if there is no frame
-  if(options.frame==='undefined'){
-    this.subscribeTf();
-  }
+  this.subscribeTf();
+  
 };
 
 /**
@@ -61,12 +70,8 @@ ROS3D.ViewerHandle.prototype.emitServerPoseUpdate = function() {
   inv.translation.y *= -1;
   inv.translation.z *= -1;
   this.camera.quaternion.set(inv.rotation.x,inv.rotation.y,inv.rotation.z,inv.rotation.w);
-  this.camera.position.set(inv.translation.x,inv.translation.y,inv.translation.z);
+  this.camera.position.set(inv.translation.x ,inv.translation.y  ,inv.translation.z);
   this.camera.updateMatrix();
-  this.camera.updateMatrixWorld();
-  var out = this.camera.localToWorld(new THREE.Vector3(1,0,0));
-  this.camera.lookAt(out);
-
 };
 
 /**

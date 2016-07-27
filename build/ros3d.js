@@ -3753,6 +3753,10 @@ ROS3D.SceneNode.prototype.unsubscribeTf = function() {
  */
 
 /**
+TODO: change where TFClient comes. Retrofit for working stuff
+**/
+
+/**
  * A Viewer can be used to render an interactive 3D scene to a HTML5 canvas.
  *
  * @constructor
@@ -3766,6 +3770,7 @@ ROS3D.SceneNode.prototype.unsubscribeTf = function() {
  *  * antialias (optional) - if antialiasing should be used
  *  * intensity (optional) - the lighting intensity setting to use
  *  * cameraPosition (optional) - the starting position of the camera
+ *  * cameraRotation (optional) - the rotation of the origin with respect to the scene
  *  * interactive (optional) - specifies whether the user can interact with the camera
  */
 ROS3D.Viewer = function(options) {
@@ -3775,25 +3780,37 @@ ROS3D.Viewer = function(options) {
   var width = options.width;
   var height = options.height;
   var background = options.background || '#111111';
+  var alpha = options.alpha || 1.0;
   var antialias = options.antialias;
   var intensity = options.intensity || 0.66;
   var near = options.near || 0.01;
   var far = options.far || 1000;
-  var alpha = options.alpha || 1.0;
+  var fov = options.fov || 40;
+  var interactive = options.interactive;
+  var tfClient = options.tfClient;
+  var frame = options.frame;
+  if (interactive===null){
+    interactive=true;
+  }
+
+  var cameraRotation = options.cameraRotation || {
+    x : 0,
+    y : 0,
+    z : 0
+  };
   var cameraPosition = options.cameraPose || {
     x : 3,
     y : 3,
     z : 3
   };
   var cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
-  var interactive = options.interactive;
-  if (interactive===undefined){
-    interactive=true;
-  }
+
+  this.cameras = [];
 
   // create the canvas to render to
   this.renderer = new THREE.WebGLRenderer({
-    antialias : antialias
+    antialias : antialias,
+    alpha : true
   });
   this.renderer.setClearColor(parseInt(background.replace('#', '0x'), 16), alpha);
   this.renderer.sortObjects = false;
@@ -3803,34 +3820,60 @@ ROS3D.Viewer = function(options) {
 
   // create the global scene
   this.scene = new THREE.Scene();
+  //a parent object in case we need to change the origin of the scene
+  this.rootObject = new THREE.Object3D();
+  this.rootObject.translateX(cameraPosition.x);
+  this.rootObject.translateY(cameraPosition.y);
+  this.rootObject.translateZ(cameraPosition.z);
+
+  this.rootObject.rotateX(cameraRotation.x);
+  this.rootObject.rotateY(cameraRotation.y);
+  this.rootObject.rotateZ(cameraRotation.z);
+
+  this.scene.add(this.rootObject);
 
   // create the global camera
-  this.camera = new THREE.PerspectiveCamera(40, width / height, near, far);
-  this.camera.position.x = cameraPosition.x;
-  this.camera.position.y = cameraPosition.y;
-  this.camera.position.z = cameraPosition.z;
-  // add controls to the camera if the scene is interactive
-  if (interactive){
+  this.cameras.push(new ROS3D.ViewerCamera({
+    near :near,
+    far :far,
+    fov: fov,
+    interactive :interactive,
+    aspect : width / height,
+    cameraPosition : cameraPosition,
+    cameraRotation : cameraRotation,
+    tfClient: tfClient,
+    frame: frame
+  }));
+
+  this.camera= this.cameras[0].camera;
+  this.scene.add(this.camera);
+
+  // add controls to the camera
+  if(interactive){
     this.cameraControls = new ROS3D.OrbitControls({
-      scene : this.scene,
+      scene : this.rootObject,
       camera : this.camera
     });
     this.cameraControls.userZoomSpeed = cameraZoomSpeed;
   }
-
+  
   // lights
   this.scene.add(new THREE.AmbientLight(0x555555));
   this.directionalLight = new THREE.DirectionalLight(0xffffff, intensity);
-  this.scene.add(this.directionalLight);
+  this.rootObject.add(this.directionalLight);
 
   // propagates mouse events to three.js objects
   this.selectableObjects = new THREE.Object3D();
-  this.scene.add(this.selectableObjects);
+  var fallbackObject=null;
+  if (interactive){
+    fallbackObject=this.cameraControls;
+  }
+  this.rootObject.add(this.selectableObjects);
   var mouseHandler = new ROS3D.MouseHandler({
     renderer : this.renderer,
     camera : this.camera,
     rootObject : this.selectableObjects,
-    fallbackTarget : this.cameraControls
+    fallbackObject:fallbackObject
   });
 
   // highlights the receiver of mouse events
@@ -3846,7 +3889,6 @@ ROS3D.Viewer = function(options) {
     if (interactive){
       that.cameraControls.update();
     }
-    
     // put light to the top-left of the camera
     that.directionalLight.position = that.camera.localToWorld(new THREE.Vector3(-1, 1, 0));
     that.directionalLight.position.normalize();
@@ -3879,8 +3921,41 @@ ROS3D.Viewer.prototype.addObject = function(object, selectable) {
   if (selectable) {
     this.selectableObjects.add(object);
   } else {
-    this.scene.add(object);
+    this.rootObject.add(object);
   }
+};
+
+/**
+ * change the camera of the global scene in the viewer
+ *
+ * @param cameraID The ID of the camera from cameras
+ */
+ROS3D.Viewer.prototype.changeCamera = function(cameraID) {
+  if (cameraID<this.cameras.length && cameraID>=0){
+    this.camera = this.cameras[cameraID].camera;
+    var position = this.cameras[cameraID].cameraPosition;
+    var rotation = this.cameras[cameraID].cameraRotation;
+    //move root object rotation to 0,0,0
+    this.rootObject.rotateX(-this.rootObject.rotation.x);
+    this.rootObject.rotateY(-this.rootObject.rotation.y);
+    this.rootObject.rotateZ(-this.rootObject.rotation.z);
+    this.rootObject.position.setX(position.x);
+    this.rootObject.position.setY(position.y);
+    this.rootObject.position.setZ(position.z);
+    this.rootObject.rotateX(rotation.x);
+    this.rootObject.rotateY(rotation.y);
+    this.rootObject.rotateZ(rotation.z);
+    }
+};
+
+/**
+ * Add a camera to the global scene
+ *
+ * @param cameraID The ID of the camera from cameras TODO
+ * @param viewerCamera A ViewerCamera
+ */
+ROS3D.Viewer.prototype.addCamera = function(viewerCamera){
+    this.cameras.push(viewerCamera);
 };
 
 /**
@@ -3921,25 +3996,33 @@ ROS3D.ViewerCamera = function(options) {
   var fov = options.fov || 40;
   var interactive = options.interactive;
   var aspect = options.aspect;
-  this.originPosition = options.originPosition || {
+  this.cameraPosition = options.cameraPosition || {
     x : 3,
     y : 3,
     z : 3
   };
-  this.originRotation = options.originRotation || {
+  this.cameraRotation = options.cameraRotation || {
     x : 0,
     y : 0,
     z : 0
   };
+  console.log(this.cameraPosition);
   this.cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
 
   // create the global camera
   this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+  this.camera.position.x=this.cameraPosition.x;
+  this.camera.position.y=this.cameraPosition.y;
+  this.camera.position.z=this.cameraPosition.z;
+
   if(options.frame!==undefined){
+
     var viewerHandle=new ROS3D.ViewerHandle({
       tfClient:options.tfClient,
       camera:this.camera,
-      frame:options.frame
+      frame:options.frame,
+      cameraPosition: this.cameraPosition,
+      cameraRotation: this.cameraRotation,
     });
   }
 
@@ -3975,15 +4058,24 @@ ROS3D.ViewerHandle = function(options) {
   this.camera = options.camera;
   this.frame = options.frame;
   this.tfTransform = new ROSLIB.Transform();
+  this.cameraPosition = options.cameraPosition || {
+    x : 3,
+    y : 3,
+    z : 3
+  };
+  this.cameraRotation = options.cameraRotation || {
+    x : 0,
+    y : 0,
+    z : 0
+  };
   //this.camera.zoom = 1.25;
 
   // start by setting the pose
   this.tfUpdateBound = this.tfUpdate.bind(this);
 
   //if there is no frame
-  if(options.frame==='undefined'){
-    this.subscribeTf();
-  }
+  this.subscribeTf();
+  
 };
 
 /**
@@ -4009,12 +4101,8 @@ ROS3D.ViewerHandle.prototype.emitServerPoseUpdate = function() {
   inv.translation.y *= -1;
   inv.translation.z *= -1;
   this.camera.quaternion.set(inv.rotation.x,inv.rotation.y,inv.rotation.z,inv.rotation.w);
-  this.camera.position.set(inv.translation.x,inv.translation.y,inv.translation.z);
+  this.camera.position.set(inv.translation.x ,inv.translation.y  ,inv.translation.z);
   this.camera.updateMatrix();
-  this.camera.updateMatrixWorld();
-  var out = this.camera.localToWorld(new THREE.Vector3(1,0,0));
-  this.camera.lookAt(out);
-
 };
 
 /**
@@ -4170,7 +4258,6 @@ ROS3D.MouseHandler = function(options) {
 ROS3D.MouseHandler.prototype.processDomEvent = function(domEvent) {
   // don't deal with the default handler
   domEvent.preventDefault();
-
   // compute normalized device coords and 3D mouse ray
   var target = domEvent.target;
   var rect = target.getBoundingClientRect();

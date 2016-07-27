@@ -205,7 +205,7 @@ MJPEGCANVAS.Viewer = function(options) {
       context.drawImage(that.image, 0, 0, that.width, that.height);
     } else {
       // center the error icon
-      context.drawImage(errorIcon.image, (that.width - (that.width / 2)) / 2,
+      context.drawImage(errorIcon, (that.width - (that.width / 2)) / 2,
           (that.height - (that.height / 2)) / 2, that.width / 2, that.height / 2);
       that.emit('warning', 'Invalid stream.');
     }

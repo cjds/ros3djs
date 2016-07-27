@@ -24,25 +24,33 @@ ROS3D.ViewerCamera = function(options) {
   var fov = options.fov || 40;
   var interactive = options.interactive;
   var aspect = options.aspect;
-  this.originPosition = options.originPosition || {
+  this.cameraPosition = options.cameraPosition || {
     x : 3,
     y : 3,
     z : 3
   };
-  this.originRotation = options.originRotation || {
+  this.cameraRotation = options.cameraRotation || {
     x : 0,
     y : 0,
     z : 0
   };
+  console.log(this.cameraPosition);
   this.cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
 
   // create the global camera
   this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+  this.camera.position.x=this.cameraPosition.x;
+  this.camera.position.y=this.cameraPosition.y;
+  this.camera.position.z=this.cameraPosition.z;
+
   if(options.frame!==undefined){
+
     var viewerHandle=new ROS3D.ViewerHandle({
       tfClient:options.tfClient,
       camera:this.camera,
-      frame:options.frame
+      frame:options.frame,
+      cameraPosition: this.cameraPosition,
+      cameraRotation: this.cameraRotation,
     });
   }
 

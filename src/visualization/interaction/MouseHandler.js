@@ -44,7 +44,6 @@ ROS3D.MouseHandler = function(options) {
 ROS3D.MouseHandler.prototype.processDomEvent = function(domEvent) {
   // don't deal with the default handler
   domEvent.preventDefault();
-
   // compute normalized device coords and 3D mouse ray
   var target = domEvent.target;
   var rect = target.getBoundingClientRect();
