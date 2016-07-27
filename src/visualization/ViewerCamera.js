@@ -1,5 +1,5 @@
 /**
- * @author Carl Saldanha - dgossow@willowgarage.com
+ * @author Carl Saldanha - csaldanha3@gatech.edu
  */
 
 /**
@@ -25,9 +25,9 @@ ROS3D.ViewerCamera = function(options) {
   var interactive = options.interactive;
   var aspect = options.aspect;
   this.originPosition = options.originPosition || {
-    x : 0,
-    y : 0,
-    z : 0
+    x : 3,
+    y : 3,
+    z : 3
   };
   this.originRotation = options.originRotation || {
     x : 0,
@@ -38,9 +38,13 @@ ROS3D.ViewerCamera = function(options) {
 
   // create the global camera
   this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  var viewerHandle=new ROS3D.ViewerHandle({
-    tfClient:options.tfClient,
-    camera:this.camera,
-    frame:options.frame
-  });
+  if(options.frame!==undefined){
+    var viewerHandle=new ROS3D.ViewerHandle({
+      tfClient:options.tfClient,
+      camera:this.camera,
+      frame:options.frame
+    });
+  }
+
+
 };

@@ -32,7 +32,10 @@ ROS3D.ViewerHandle = function(options) {
   // start by setting the pose
   this.tfUpdateBound = this.tfUpdate.bind(this);
 
-  this.subscribeTf();
+  //if there is no frame
+  if(options.frame==='undefined'){
+    this.subscribeTf();
+  }
 };
 
 /**
