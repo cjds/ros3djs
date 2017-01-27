@@ -74,6 +74,9 @@ module.exports = function(grunt) {
           configure: 'jsdoc_conf.json'
         }
       }
+    },
+    simplemocha: {
+      all: { src: ['test/*.js'] }
     }
   });
 
@@ -84,10 +87,12 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-jsdoc');
   grunt.loadNpmTasks('grunt-karma');
+  grunt.loadNpmTasks('grunt-simple-mocha');
 
   grunt.registerTask('dev', ['concat', 'watch']);
   grunt.registerTask('build', ['concat', 'jshint', 'uglify']);
   grunt.registerTask('build_and_watch', ['watch']);
   grunt.registerTask('doc', ['clean', 'jsdoc']);
+  grunt.registerTask('test', ['simplemocha']);
 };
 
